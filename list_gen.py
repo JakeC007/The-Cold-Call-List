@@ -62,6 +62,9 @@ def random_insert_rows(truncated_df, rows_to_insert, min_cold_call_interval = 4)
     Returns:
     pd.DataFrame: A new DataFrame with rows inserted at random positions within the specified domain.
     """
+    # Turn into df
+    rows_to_insert = pd.DataFrame(list(rows_to_insert))
+
     # Calculate domain start and end indices
     domain_start = min_cold_call_interval
     domain_end = len(truncated_df) - min_cold_call_interval
@@ -98,23 +101,41 @@ def create_long_list(original_df, n, m):
     duplicated_dfs_list = [original_df.copy() for _ in range(n)]
 
     # Step 2: Shuffle each of the n DataFrames independently
-    for df in duplicated_dfs_list:
-        df.apply(random.shuffle, axis=1)
+    for i, df in enumerate(duplicated_dfs_list):
+        duplicated_dfs_list[i] = df.sample(frac=1).reset_index(drop=True)
 
     # Step 3: Find duplicates within m at the seams between DataFrame n-1 and n for all DataFrames
     for i in range(1, n):
-        bottom_of_prev_df = duplicated_dfs_list[i-1].iloc[:, -m:]
-        top_of_current_df = duplicated_dfs_list[i].iloc[:, :m]
+        bottom_of_prev_df = duplicated_dfs_list[i-1].iloc[-m:, 0] # [row, column]
+        top_of_current_df = duplicated_dfs_list[i].iloc[:m, 0]
 
-        common_duplicates = set(bottom_of_prev_df.values.flatten()).intersection(top_of_current_df.values.flatten())
+        print("\n\n\nBottom Past")
+        print(bottom_of_prev_df.head())
 
+        print("Top Next")
+        print(top_of_current_df.head())
+
+
+
+        common_duplicates = set(bottom_of_prev_df.values).intersection(top_of_current_df.values)
+        print(f"len dups {len(common_duplicates)}")
+        print(common_duplicates)
+        
+        # If no overlaps, continue to next loop
+        if not common_duplicates:
+            continue
+        
+        # If overlaps, handle them.
         for duplicate in common_duplicates:
             # Drop rows in the DataFrame where bottom_of_prev_df/top_of_current_df is a duplicate
-            duplicated_dfs_list[i-1] = duplicated_dfs_list[i-1][~duplicated_dfs_list[i-1].iloc[:, -m:].isin([duplicate]).any(axis=1)]
-            duplicated_dfs_list[i] = duplicated_dfs_list[i][~duplicated_dfs_list[i].iloc[:, :m].isin([duplicate]).any(axis=1)]
+            truncated_prev_df = duplicated_dfs_list[i-1][~duplicated_dfs_list[i-1].isin([duplicate]).any(axis=1)] # this assumes all unique names
+            truncated_current_df = duplicated_dfs_list[i][~duplicated_dfs_list[i].isin([duplicate]).any(axis=1)]
 
         # Step 4: Move duplicates elsewhere in the DataFrame
-        duplicated_dfs_list[i] = random_insert_rows(duplicated_dfs_list[i-1], duplicated_dfs_list[i], common_duplicates, min_cold_call_interval=4)
+        min_cold_call_interval = 4 #TODO find a way for user to modify this value
+        duplicated_dfs_list[i-1] = random_insert_rows(truncated_prev_df, common_duplicates, min_cold_call_interval)
+        duplicated_dfs_list[i] = random_insert_rows(truncated_current_df, common_duplicates, min_cold_call_interval)
+
 
     # Concatenate all the DataFrames into a df
     long_df = pd.concat(duplicated_dfs_list, axis=0, ignore_index=True).reset_index(drop=True)
@@ -135,4 +156,4 @@ if __name__ == "__main__":
     column_name = "Names" #TODO make robust
     count_rows_until_duplicate_in_column(export_df, column_name)
     
-    export_df.to_csv("long", index=False, encoding='utf-8')
+    export_df.to_csv("long.csv", index=False, encoding='utf-8')
