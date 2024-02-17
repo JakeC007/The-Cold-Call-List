@@ -10,7 +10,7 @@ Inspired after a day in class where a student was cold called in sequential clas
 
 
 ## Great! How Can I Use It?
-Currently you need a slight amount of technical know-how and have Python installed on your computer. If you have that then
+Currently you need a slight amount of technical know-how and have Python, `numpy` and `pandas` installed on your computer. If you're missing the packages run `pip install -r requirements.txt` in your terminal. Then:
 0. Have a csv with one column called `Names` and unique names for each student in that column 
 1. Open `list_gen.py`
 2. Edit `pd.read_csv('your/csv/goes/here')`
