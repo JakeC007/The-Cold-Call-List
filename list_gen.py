@@ -5,8 +5,36 @@ J. Chanenson
 
 import pandas as pd
 import numpy as np
-import random
+import random, statistics
 from pprint import pprint
+
+def report_stats(data):
+    # Calculate and print statistics
+    total_count = len(data)
+    total_sum = sum(data.values())
+    average = total_sum / total_count
+    maximum_value = max(data.values())
+    minimum_value = min(data.values())
+    mode = statistics.mode(data.values())
+    std_deviation = statistics.stdev(data.values())
+    variance = statistics.variance(data.values())
+
+
+    # Print CLI stats header
+    print("=" * 39)
+    print("{:^39}".format("Data Statistics"))
+    print("=" * 39)
+
+    print(f"Total Number of Students In Class: {total_count}")
+    print(f"Average Number of Students Between A Given Student's Cold Call: {average:.2f}\n")
+    print(f"Maximum Number of Students Between A Given Student's Cold Call: {maximum_value}")
+    print(f"Minimum Number of Students Between A Given Student's Cold Call: {minimum_value}")
+    print(f"Modal Number of Students Between A Given Student's Cold Call: {mode}\n")
+    print(f"Standard Deviation: {std_deviation:.2f}")
+    print(f"Variance: {variance:.2f}")
+
+    # Print closing header line
+    print("=" * 39)
 
 def count_rows_until_duplicate_in_column(df, column_name):
     """
@@ -49,7 +77,7 @@ def count_rows_until_duplicate_in_column(df, column_name):
 
     return counts
 
-def checkIndiciesInRange(original_df, truncated_df, final_df, min_cold_call_interval = 4):
+def check_indicies_in_range(original_df, truncated_df, final_df, min_cold_call_interval = 4):
     """
         Check if indices of elements in final_df['Names'] not present in truncated_df['Names']
         are within a specified range.
@@ -174,8 +202,8 @@ def create_long_list(original_df, n, m):
         top_of_current_df = duplicated_dfs_list[i].iloc[:m, 0]
 
         common_duplicates = set(bottom_of_prev_df.values).intersection(top_of_current_df.values)
-        print(f"len dups {len(common_duplicates)}")
-        print(common_duplicates)
+
+        # print(common_duplicates)
         
         # If no overlaps, continue to next loop
         if not common_duplicates:
@@ -193,9 +221,9 @@ def create_long_list(original_df, n, m):
         duplicated_dfs_list[i] = random_insert_rows(truncated_current_df, common_duplicates, min_cold_call_interval)
 
         # Check your work
-        checkIndiciesInRange(original_df, truncated_current_df, duplicated_dfs_list[i], min_cold_call_interval)
+        check_indicies_in_range(original_df, truncated_current_df, duplicated_dfs_list[i], min_cold_call_interval)
 
-        checkIndiciesInRange(original_df, truncated_prev_df, duplicated_dfs_list[i-1], min_cold_call_interval)
+        check_indicies_in_range(original_df, truncated_prev_df, duplicated_dfs_list[i-1], min_cold_call_interval)
 
 
     # Concatenate all the DataFrames into a df
@@ -217,6 +245,8 @@ if __name__ == "__main__":
 
     # Check your work
     column_name = "Names" #TODO make robust
-    count_rows_until_duplicate_in_column(export_df, column_name)
-    
+    foo = count_rows_until_duplicate_in_column(export_df, column_name)
+    report_stats(foo)
+
+    # Print
     export_df.to_csv("long.csv", index=False, encoding='utf-8')
