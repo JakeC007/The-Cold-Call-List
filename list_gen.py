@@ -7,6 +7,48 @@ import pandas as pd
 import numpy as np
 import random
 
+def count_rows_until_duplicate_in_column(df, column_name):
+    """
+    Count the number of rows until a duplicate value is encountered in a specified column of a DataFrame.
+
+    Parameters:
+    - df (pandas.DataFrame): The input DataFrame.
+    - column_name (str): The name of the column to analyze.
+
+    Returns:
+    - dict: A dictionary containing the shortest interval for each unique value in the specified column.
+    """
+
+    # Initialize an empty dictionary to store the last index where each value was seen
+    last_index = {}
+
+    # Initialize an empty dictionary to store the counts
+    counts = {}
+
+    # Iterate over the rows in the specified column
+    for index, value in enumerate(df[column_name]):
+        # Check if the value has been seen before
+        if value in last_index:
+            # Calculate the interval since the last occurrence
+            interval = index - last_index[value]
+
+            # Update the count if the interval is shorter
+            if value not in counts or interval < counts[value]:
+                counts[value] = interval
+
+        # Update the last index where the value was seen
+        last_index[value] = index
+
+    # Find the key with the minimum value (lowest interval)
+    min_interval_key = min(counts, key=counts.get)
+    lowest_interval = counts[min_interval_key]
+
+    # Print the lowest interval and corresponding value before returning the counts
+    print(f"Lowest Interval in Column '{column_name}': {lowest_interval} for Value '{min_interval_key}'")
+
+    return counts
+
+
 def random_insert_rows(truncated_df, rows_to_insert, min_cold_call_interval = 4):
     """
     Randomly inserts rows from another DataFrame into a specified domain within the original DataFrame.
@@ -81,5 +123,16 @@ def create_long_list(original_df, n, m):
 
 if __name__ == "__main__":
     
-    original_df = pd.read_csv('your_file.csv') 
-    create_long_list(original_df, n, m)
+    #Import 
+    original_df = pd.read_csv('import_data.csv')  #TODO make robust to excell files and split 1st name last name fields
+    
+    # Generate
+    n = 4   #TODO make these user input 
+    m = 3
+    export_df = create_long_list(original_df, n, m)
+
+    # Check your work
+    column_name = "Names" #TODO make robust
+    count_rows_until_duplicate_in_column(export_df, column_name)
+    
+    export_df.to_csv("long", index=False, encoding='utf-8')
