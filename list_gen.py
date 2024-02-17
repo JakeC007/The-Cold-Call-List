@@ -99,6 +99,9 @@ def checkIndiciesInRange(original_df, truncated_df, final_df, min_cold_call_inte
 
         print("Duplicate elements in the 'Names' column of final_df:")
         print(duplicates)
+        pprint(final_df['Names'])
+
+        pprint(original_df['Names'])
 
     elif not are_indices_within_range and (final_df_count == original_df_count):
         print(f"Issue! Some indices are still in the interval space. All indices are accounted for. | Interval: {min_cold_call_interval}.")
@@ -119,7 +122,7 @@ def random_insert_rows(truncated_df, rows_to_insert, min_cold_call_interval = 4)
     pd.DataFrame: A new DataFrame with rows inserted at random positions within the specified domain.
     """
     # Turn into df
-    rows_to_insert = pd.DataFrame(list(rows_to_insert))
+    rows_to_insert = pd.DataFrame(list(rows_to_insert), columns=['Names'])
 
     # Calculate domain start and end indices
     domain_start = min_cold_call_interval
@@ -130,11 +133,15 @@ def random_insert_rows(truncated_df, rows_to_insert, min_cold_call_interval = 4)
 
     # Sort the indices to insert rows in the correct order
     random_indices.sort()
-
+    
     # Insert the rows from the other DataFrame into the original DataFrame
     for i, index in enumerate(random_indices):
+        # print(f"New index {index}")
+        # print(rows_to_insert.iloc[i:i + 1])
         truncated_df = pd.concat([truncated_df.iloc[:index + i], rows_to_insert.iloc[i:i + 1], truncated_df.iloc[index + i:]]).reset_index(drop=True)
-
+    
+    # pprint(truncated_df)
+    
     return truncated_df
 
 
@@ -198,7 +205,6 @@ def create_long_list(original_df, n, m):
         checkIndiciesInRange(original_df, truncated_current_df, duplicated_dfs_list[i])
 
         checkIndiciesInRange(original_df, truncated_prev_df, duplicated_dfs_list[i-1])
-        print()
 
 
     # Concatenate all the DataFrames into a df
