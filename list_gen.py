@@ -173,8 +173,6 @@ def random_insert_rows(truncated_df, rows_to_insert, min_cold_call_interval = 4)
     
     return truncated_df
 
-
-
 def create_long_list(original_df, n, m):
     """
     Create a long list by duplicating and shuffling the original DataFrame, resolving duplicates at seams,
