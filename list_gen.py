@@ -6,6 +6,7 @@ J. Chanenson
 import pandas as pd
 import numpy as np
 import random
+from pprint import pprint
 
 def count_rows_until_duplicate_in_column(df, column_name):
     """
@@ -48,6 +49,61 @@ def count_rows_until_duplicate_in_column(df, column_name):
 
     return counts
 
+def checkIndiciesInRange(original_df, truncated_df, final_df, min_cold_call_interval = 4):
+    """
+        Check if indices of elements in final_df['Names'] not present in truncated_df['Names']
+        are within a specified range.
+
+        Parameters:
+        - truncated_df (pandas.DataFrame): The first DataFrame containing a 'Names' column.
+        - final_df (pandas.DataFrame): The second DataFrame containing a 'Names' column.
+        - min_cold_call_interval (int): The minimum interval to consider for index range.
+
+        Returns:
+        None
+        """
+    # Calculate domain start and end indices
+    values_not_in_truncated_df = final_df[~final_df['Names'].isin(truncated_df['Names'])]
+
+    # Specify the range of indices you want to check
+    min_index = min_cold_call_interval
+    max_index = len(final_df) - min_cold_call_interval
+
+    # Check if all indices are within the specified range
+    are_indices_within_range = all(min_index <= index <= max_index for index in values_not_in_truncated_df.index)
+
+    # Check to make sure the new df has the same number of unique names 
+    original_df_count = original_df['Names'].nunique() 
+    final_df_count = final_df['Names'].nunique() 
+
+    if are_indices_within_range and (final_df_count == original_df_count):
+        print(f"All indices are accounted for and shuffled correctly. | Interval: {min_cold_call_interval}")
+    
+    elif are_indices_within_range and (final_df_count != original_df_count):
+        print(f"Issue! Some indices are missing! All indices in the df are shuffled correctly. | Interval: {min_cold_call_interval}.")
+        print(f"Orginal {original_df_count} | Final {final_df_count} | Final raw len {len(final_df)}")
+
+
+        unique_names_final_df = final_df['Names'].unique()
+        unique_names_original_df = original_df['Names'].unique()
+
+        # Find the difference
+        names_difference = set(unique_names_original_df).difference(unique_names_final_df)
+
+        # Print the difference
+        print("Unique elements in 'Names' column of original_df not present in final_df:")
+        print(names_difference)
+
+        # Spot the duplicate
+        duplicates = final_df[final_df['Names'].duplicated()]
+
+        print("Duplicate elements in the 'Names' column of final_df:")
+        print(duplicates)
+
+    elif not are_indices_within_range and (final_df_count == original_df_count):
+        print(f"Issue! Some indices are still in the interval space. All indices are accounted for. | Interval: {min_cold_call_interval}.")
+    else:
+        print(f"Issue! Some indices are still in the interval space and some indices are missing! | Interval: {min_cold_call_interval}.")
 
 def random_insert_rows(truncated_df, rows_to_insert, min_cold_call_interval = 4):
     """
@@ -109,11 +165,11 @@ def create_long_list(original_df, n, m):
         bottom_of_prev_df = duplicated_dfs_list[i-1].iloc[-m:, 0] # [row, column]
         top_of_current_df = duplicated_dfs_list[i].iloc[:m, 0]
 
-        print("\n\n\nBottom Past")
-        print(bottom_of_prev_df.head())
+        # print("\n\n\nBottom Past")
+        # print(bottom_of_prev_df.head())
 
-        print("Top Next")
-        print(top_of_current_df.head())
+        # print("Top Next")
+        # print(top_of_current_df.head())
 
 
 
@@ -126,21 +182,31 @@ def create_long_list(original_df, n, m):
             continue
         
         # If overlaps, handle them.
-        for duplicate in common_duplicates:
-            # Drop rows in the DataFrame where bottom_of_prev_df/top_of_current_df is a duplicate
-            truncated_prev_df = duplicated_dfs_list[i-1][~duplicated_dfs_list[i-1].isin([duplicate]).any(axis=1)] # this assumes all unique names
-            truncated_current_df = duplicated_dfs_list[i][~duplicated_dfs_list[i].isin([duplicate]).any(axis=1)]
+        # Drop rows in the DataFrame where bottom_of_prev_df/top_of_current_df is a duplicate
+        truncated_prev_df = duplicated_dfs_list[i-1][~duplicated_dfs_list[i-1].isin(common_duplicates).any(axis=1)] # this assumes all unique names
+        truncated_current_df = duplicated_dfs_list[i][~duplicated_dfs_list[i].isin(common_duplicates).any(axis=1)]
+        print(f"Len curr_t: {len(truncated_current_df)} | Len prev_t: {len(truncated_prev_df)}")
 
         # Step 4: Move duplicates elsewhere in the DataFrame
         min_cold_call_interval = 4 #TODO find a way for user to modify this value
+
         duplicated_dfs_list[i-1] = random_insert_rows(truncated_prev_df, common_duplicates, min_cold_call_interval)
         duplicated_dfs_list[i] = random_insert_rows(truncated_current_df, common_duplicates, min_cold_call_interval)
+
+        print(f"Len curr: {len(duplicated_dfs_list[i])} | Len prev: {len(duplicated_dfs_list[i-1])}")
+
+        checkIndiciesInRange(original_df, truncated_current_df, duplicated_dfs_list[i])
+
+        checkIndiciesInRange(original_df, truncated_prev_df, duplicated_dfs_list[i-1])
+        print()
 
 
     # Concatenate all the DataFrames into a df
     long_df = pd.concat(duplicated_dfs_list, axis=0, ignore_index=True).reset_index(drop=True)
 
     return long_df
+
+
 
 if __name__ == "__main__":
     
