@@ -77,7 +77,8 @@ def checkIndiciesInRange(original_df, truncated_df, final_df, min_cold_call_inte
     final_df_count = final_df['Names'].nunique() 
 
     if are_indices_within_range and (final_df_count == original_df_count):
-        print(f"All indices are accounted for and shuffled correctly. | Interval: {min_cold_call_interval}")
+        # print(f"All indices are accounted for and shuffled correctly. | Interval: {min_cold_call_interval}")
+        pass
     
     elif are_indices_within_range and (final_df_count != original_df_count):
         print(f"Issue! Some indices are missing! All indices in the df are shuffled correctly. | Interval: {min_cold_call_interval}.")
@@ -172,14 +173,6 @@ def create_long_list(original_df, n, m):
         bottom_of_prev_df = duplicated_dfs_list[i-1].iloc[-m:, 0] # [row, column]
         top_of_current_df = duplicated_dfs_list[i].iloc[:m, 0]
 
-        # print("\n\n\nBottom Past")
-        # print(bottom_of_prev_df.head())
-
-        # print("Top Next")
-        # print(top_of_current_df.head())
-
-
-
         common_duplicates = set(bottom_of_prev_df.values).intersection(top_of_current_df.values)
         print(f"len dups {len(common_duplicates)}")
         print(common_duplicates)
@@ -192,7 +185,6 @@ def create_long_list(original_df, n, m):
         # Drop rows in the DataFrame where bottom_of_prev_df/top_of_current_df is a duplicate
         truncated_prev_df = duplicated_dfs_list[i-1][~duplicated_dfs_list[i-1].isin(common_duplicates).any(axis=1)] # this assumes all unique names
         truncated_current_df = duplicated_dfs_list[i][~duplicated_dfs_list[i].isin(common_duplicates).any(axis=1)]
-        print(f"Len curr_t: {len(truncated_current_df)} | Len prev_t: {len(truncated_prev_df)}")
 
         # Step 4: Move duplicates elsewhere in the DataFrame
         min_cold_call_interval = 4 #TODO find a way for user to modify this value
@@ -200,11 +192,10 @@ def create_long_list(original_df, n, m):
         duplicated_dfs_list[i-1] = random_insert_rows(truncated_prev_df, common_duplicates, min_cold_call_interval)
         duplicated_dfs_list[i] = random_insert_rows(truncated_current_df, common_duplicates, min_cold_call_interval)
 
-        print(f"Len curr: {len(duplicated_dfs_list[i])} | Len prev: {len(duplicated_dfs_list[i-1])}")
+        # Check your work
+        checkIndiciesInRange(original_df, truncated_current_df, duplicated_dfs_list[i], min_cold_call_interval)
 
-        checkIndiciesInRange(original_df, truncated_current_df, duplicated_dfs_list[i])
-
-        checkIndiciesInRange(original_df, truncated_prev_df, duplicated_dfs_list[i-1])
+        checkIndiciesInRange(original_df, truncated_prev_df, duplicated_dfs_list[i-1], min_cold_call_interval)
 
 
     # Concatenate all the DataFrames into a df
@@ -220,8 +211,8 @@ if __name__ == "__main__":
     original_df = pd.read_csv('import_data.csv')  #TODO make robust to excell files and split 1st name last name fields
     
     # Generate
-    n = 4   #TODO make these user input 
-    m = 3
+    n = 5   #TODO make these user input 
+    m = 5
     export_df = create_long_list(original_df, n, m)
 
     # Check your work
