@@ -25,6 +25,7 @@ Yeah, sorry about that. My roadmap is as follows to improve.
 
 ## Roadmap
 - GUI to handle user input
+     - Maybe run as a `ipynb` file in the meantime?
 - More robust roster info
      - Handle `.xslx` files
      - Handle files where student names are split across a first name and last name column
